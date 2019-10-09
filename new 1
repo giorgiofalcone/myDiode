@@ -1,0 +1,2 @@
+node myDiode --side A --int eth0 --ext enxd037453fd756
+node myDiode --side B --int enxd037453bd9f4
