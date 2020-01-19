@@ -1,15 +1,10 @@
 const parse = () =>
 {
-    let args = new Object()
-
     process.argv.forEach( (arg, index, thisarg) =>
-        {
-            if( arg.startsWith( "--" ) )
-                args[ thisarg[index].substring(2) ] = thisarg[index+1];
-        }   
-    );
-    
-    return args;
+    {
+        if( arg.startsWith( "--" ) ) global.config[ thisarg[index].substring(2) ] = thisarg[index+1] 
+    });
+
 }
 
 module.exports = { parse }

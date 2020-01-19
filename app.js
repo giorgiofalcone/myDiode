@@ -1,42 +1,67 @@
-require("dotenv").config({path: __dirname + '/.env'})
-const myArgs = require("./myArgs");
+const fs = require("fs")
+const path = require('path');
+
+global.config = JSON.parse( fs.readFileSync( path.join(__dirname, 'config.json') ) )
+require("./myArgs").parse();
+
 const net = require("./myNetwork");
-const args = myArgs.parse();
+const protocols = fs.readdirSync( path.join(__dirname, 'protocols/') );
+const listenNic = net.checkNIC( global.config.in );
+const myBuffer = require( path.join(__dirname, "./myBuffer") )
 
-const HTTP_PORT = process.env.HTTP_PORT || 8080 ;
-const HTTPS_PORT = process.env.HTTPS_PORT || 8443 ;
-const UDP_PORT = process.env.UDP_PORT || 12345 ;
-const DESTINATION = process.env.DESTINATION || "localhost:2222" ;
-
-switch( args["side"] )
+switch( global.config.side )
 {
-/*     case "A":
-        const listennic = net.checkNIC( args["int"] );    
-        const transmitnic = net.checkNIC( args["ext"] );
-        const A = require("./Aside")
-        console.log( "Starting A side")
-        A.run( listennic.IP, HTTP_PORT, transmitnic.IPbcast, UDP_PORT)
-        
-    break; */
-
     case "A":
-        const listennic = net.checkNIC( args["int"] );    
-        const transmitnic = net.checkNIC( args["ext"] );
-        const A = require("./Aside_https")
-        console.log( "Starting A side")
-        A.run( listennic.IP, HTTPS_PORT, transmitnic.IPbcast, UDP_PORT)
-        
+    {
+        const transmitNic = net.checkNIC( global.config.out );
+
+        protocols.filter( name => name.includes(".js")).forEach( name =>
+        {
+            const protocol = require("./protocols/" + name)
+
+            protocol.events.on( protocol.defaultPort , 
+                message => myBuffer.sendA( message, transmitNic.IPbcast, protocol.defaultPort ))
+            
+            protocol.clientServer ? protocol.listen(listenNic.IP) : protocol.listen();
+        });
+    }
     break;
 
     case "B":
-        const IPb = net.checkNIC( args["int"]) 
-        const B = require("./Bside")
-        console.log( "Starting B side")
-        const IP = process.platform === "win32" ? IPb.IP : IPb.IPbcast;
-        B.run( IP , UDP_PORT, DESTINATION )
+    {
+        const IP = process.platform === "win32" ? listenNic.IP : listenNic.IPbcast;
+        const udp = require("./protocols/module_udp");
 
+        protocols.filter( name => name.includes(".js")).forEach( name =>
+        {
+            const protocol = require("./protocols/" + name)
+
+            if( protocol.clientServer )
+            {
+                udp.events.on( protocol.defaultPort , message => myBuffer.sendB(protocol.defaultPort, message  ))
+                myBuffer.events.on( protocol.defaultPort, message => protocol.send(message) )
+            }
+            else
+            {
+                myBuffer.readB( udp.events, protocol.defaultPort )
+                protocol.send( myBuffer.events )
+            }
+
+            udp.listen(IP, protocol.defaultPort)
+        });
+    }
     break;
 
+    case "C":
+        const crypto = require("./myCrypto")
+        const message = "Test: success"
+
+        console.log( crypto.decrypt( crypto.encrypt(message) ) )
+
+        break;
+
+
     default:
-        console.error("bad arguments\nUsage: node app --side A --int --ext !! node app --side B --int"); process.exit(1)
+        console.error("bad arguments\nUsage: node app --side A --in --out !! node app --side B --in");
+        process.exit(1)
 }

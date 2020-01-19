@@ -33,13 +33,16 @@ const run = (listenIP, listenPORT, destIP, destPORT) =>
 
 const sendUDP = (message, destIP, destPORT) =>
 {
-    let packet;
+/*     let packet; */
 
     if( process.env.ENCRYPTION == "true" )
     {
-        packet = new Buffer( JSON.stringify( crypto.encrypt( message ) ) );
+        const crypted = crypto.encrypt( message ) 
+        message = JSON.stringify( crypted )
+/*         packet = new Buffer( JSON.stringify( crypto.encrypt( message ) ) ); */
     }
-    else packet = new Buffer( message );
+    
+    const packet = new Buffer( message );
     
     const udp = dgram.createSocket('udp4');
 

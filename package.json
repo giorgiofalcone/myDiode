@@ -1,0 +1,21 @@
+{
+  "name": "mydiode",
+  "version": "0.1.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "giorgio.falcone@outlook.com",
+  "license": "ISC",
+  "dependencies": {
+    "broadcast-address": "^1.0.2",
+    "constants": "0.0.2",
+    "crypto": "^1.0.1",
+    "dotenv": "^8.1.0",
+    "https": "^1.0.0",
+    "mqtt": "^3.0.0",
+    "node-fetch": "^2.6.0",
+    "pipe-wrap": "^1.0.0"
+  }
+}
