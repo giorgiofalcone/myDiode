@@ -1,6 +1,3 @@
-// http superDOC https://nodejs.org/es/docs/guides/anatomy-of-an-http-transaction/
-// UDP superDOC https://www.hacksparrow.com/nodejs/udp-server-and-client-example.html
-
 const defaultPort = 8443;
 const clientServer = true;
 const events = require('events');
@@ -9,7 +6,7 @@ const myEmitter = new events.EventEmitter();
 const https = require('https');
 const path = require('path');
 
-const listen = (listenIP) =>
+const listen = () =>
 {
     const fs = require("fs")
 
@@ -42,23 +39,41 @@ const listen = (listenIP) =>
 
     server.on("error", error => console.error(error) )
 
-    server.listen( defaultPort, listenIP, () => console.log( "HTTPS server listening on: " + listenIP + ":" + defaultPort ))
+    server.listen( defaultPort, global.config.listenNic.IP, () => console.log( "HTTPS server listening on: " + global.config.listenNic.IP + ":" + defaultPort ))
 }
 
-const send = message =>
+const send = text =>
 {
-    const fetch = require("node-fetch")
-    // IGNORE SSL ERRORS
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+    try
+    {
+        const message = JSON.parse( text )
 
-    const packet = JSON.parse( message )
-    const url = process.env.PROXY === "true"? packet.url : DESTINATION 
-    const body = packet.body === "" ? null: packet.body ;
+        let params = global.config.https.proxy ? message.headers["host"] : global.config.https.destination ;
 
-    fetch( url , { method: packet.method, headers: packet.headers, body: body })
-        .then( res => res.text() )
-        .then( body => console.log(body) )
-        .catch()
+        params = params.split(":")
+
+        const options = {
+            hostname: params[0],
+            port: params[1] ? params[1] : 80,
+            path: message["url"],
+            method: message["method"],
+            headers: message["headers"],
+            timeout: 50000
+        }
+
+        const request = https.request(options)
+        if( message["body"]) request.write( message["body"] )
+        request.end();
+        request.on('error', error => 
+        {
+            console.error(error)
+            setTimeout( ( ) => send(text), 10000)
+        });
+    }
+    catch (error)
+    {
+        console.error(error)    
+    }   
 }
 
 module.exports = { listen, send, events : myEmitter , defaultPort, clientServer }

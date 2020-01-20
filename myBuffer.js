@@ -1,6 +1,6 @@
 const events = require('events');
 const myEmitter = new events.EventEmitter();
-const udp = require("./protocols/module_udp")
+const udp = require("./module_udp")
 const db = [];
 
 const sendA = ( message, ip, port) =>

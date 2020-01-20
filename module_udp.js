@@ -1,15 +1,14 @@
-// http superDOC https://nodejs.org/es/docs/guides/anatomy-of-an-http-transaction/
-// UDP superDOC https://www.hacksparrow.com/nodejs/udp-server-and-client-example.html
-
 const defaultPort = 1234;
 const clientServer = true;
 const events = require('events');
 const myEmitter = new events.EventEmitter();
 
 const dgram = require('dgram');
-const crypto = require("../myCrypto");
+const crypto = require("./myCrypto");
 
-const listen = (listenIP, listenPORT) =>
+const IP = process.platform === "win32" ? global.config.listenNic.IP : global.config.listenNic.IPbcast;
+
+const listen = listenPORT =>
 {
     const udp = dgram.createSocket('udp4');
 
@@ -37,7 +36,7 @@ const listen = (listenIP, listenPORT) =>
         }
     );
 
-    udp.bind(listenPORT, listenIP);
+    udp.bind(listenPORT, IP);
 }
 
 const send = (message, destIP, destPORT) =>

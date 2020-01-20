@@ -1,12 +1,16 @@
 const fs = require("fs")
 const path = require('path');
-
+// read configs from config.json
 global.config = JSON.parse( fs.readFileSync( path.join(__dirname, 'config.json') ) )
+// read parameters form argv
 require("./myArgs").parse();
-
+// myNetwork is used to check if interface name exists and returns local and broadcast IP 
 const net = require("./myNetwork");
+// scan for all modules in protocol folder
 const protocols = fs.readdirSync( path.join(__dirname, 'protocols/') );
-const listenNic = net.checkNIC( global.config.in );
+// checks if --in parameter is a correct interface name
+global.config.listenNic = net.checkNIC( global.config.in );
+
 const myBuffer = require( path.join(__dirname, "./myBuffer") )
 
 switch( global.config.side )
@@ -22,15 +26,15 @@ switch( global.config.side )
             protocol.events.on( protocol.defaultPort , 
                 message => myBuffer.sendA( message, transmitNic.IPbcast, protocol.defaultPort ))
             
-            protocol.clientServer ? protocol.listen(listenNic.IP) : protocol.listen();
+            protocol.listen()
+            //protocol.clientServer ? protocol.listen(listenNic.IP) : protocol.listen();
         });
     }
     break;
 
     case "B":
     {
-        const IP = process.platform === "win32" ? listenNic.IP : listenNic.IPbcast;
-        const udp = require("./protocols/module_udp");
+        const udp = require("./module_udp");
 
         protocols.filter( name => name.includes(".js")).forEach( name =>
         {
@@ -47,7 +51,7 @@ switch( global.config.side )
                 protocol.send( myBuffer.events )
             }
 
-            udp.listen(IP, protocol.defaultPort)
+            udp.listen( protocol.defaultPort)
         });
     }
     break;
