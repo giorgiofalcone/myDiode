@@ -11,59 +11,59 @@ const protocols = fs.readdirSync( path.join(__dirname, 'protocols/') );
 // checks if --in parameter is a correct interface name
 global.config.listenNic = net.checkNIC( global.config.in );
 
-const myBuffer = require( path.join(__dirname, "./myBuffer") )
+const moduleMyBuffer = require( path.join(__dirname, "./myBuffer") )
+const myBuffer = new moduleMyBuffer();
+
+const moduleUdp = require("./module_udp");
+const udp = new moduleUdp();
 
 switch( global.config.side )
 {
     case "A":
     {
-        const transmitNic = net.checkNIC( global.config.out );
+        global.config.transmitNic = net.checkNIC( global.config.out );
 
+        myBuffer.on("message", (message, port) => udp.send(message, port) )
+        
         protocols.filter( name => name.includes(".js")).forEach( name =>
         {
-            const protocol = require("./protocols/" + name)
+            const moduleProto = require("./protocols/" + name)
+            const protocol = new moduleProto();
 
-            protocol.events.on( protocol.defaultPort , 
-                message => myBuffer.sendA( message, transmitNic.IPbcast, protocol.defaultPort ))
+            protocol.on( "message" , (message, port) => 
+            {
+                myBuffer.sendA( message, port)
+            });
             
             protocol.listen()
-            //protocol.clientServer ? protocol.listen(listenNic.IP) : protocol.listen();
-        });
+        });        
     }
     break;
 
     case "B":
     {
-        const udp = require("./module_udp");
+        udp.on( "message" , (text, port) => myBuffer.sendB(text, port))
 
         protocols.filter( name => name.includes(".js")).forEach( name =>
         {
-            const protocol = require("./protocols/" + name)
+            const moduleProto = require("./protocols/" + name)
+            const protocol = new moduleProto();
 
-            if( protocol.clientServer )
-            {
-                udp.events.on( protocol.defaultPort , message => myBuffer.sendB(protocol.defaultPort, message  ))
-                myBuffer.events.on( protocol.defaultPort, message => protocol.send(message) )
-            }
-            else
-            {
-                myBuffer.readB( udp.events, protocol.defaultPort )
-                protocol.send( myBuffer.events )
-            }
+            // port number is used as key to send event data to the right protocol
+            myBuffer.on( protocol.defaultPort(), message => protocol.send(message) )
 
-            udp.listen( protocol.defaultPort)
+            udp.listen( protocol.defaultPort() )
         });
     }
     break;
 
     case "C":
+    {
         const crypto = require("./myCrypto")
         const message = "Test: success"
-
         console.log( crypto.decrypt( crypto.encrypt(message) ) )
-
-        break;
-
+    }
+    break;
 
     default:
         console.error("bad arguments\nUsage: node app --side A --in --out !! node app --side B --in");

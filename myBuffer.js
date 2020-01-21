@@ -1,46 +1,47 @@
 const events = require('events');
-const myEmitter = new events.EventEmitter();
-const udp = require("./module_udp")
 const db = [];
 
-const sendA = ( message, ip, port) =>
+class myBuffer extends events
 {
-    message = JSON.stringify( {timestamp : Date.now() , message : message} )
-    put( message, ip, port , global.config.retry.times);
-}
-
-const put = (message, ip, port, retry) =>
-{
-    udp.send( message, ip, port )
-
-    if( retry > 0 )
+    constructor()
     {
-        setTimeout( () =>
-        {
-            put(message, ip, port, --retry);
-        }, global.config.retry.timeout);
+        super()
     }
-}
-
-const sendB = (port, text) =>
-{
-    const message = JSON.parse( text )
     
-    if( db[ message["timestamp"] ] )
+    sendA(message, port)
     {
-        if( --db[message["timestamp"] ] == 0 )
-            delete db[message["timestamp"]]
+        message = JSON.stringify( {timestamp : Date.now() , message : message} )
+        this.recursiveSend( message, port , global.config.retry.times);
     }
-    else
+
+    recursiveSend (message, port, retry)
     {
-        db[ message["timestamp"] ] = (global.config.retry.times)
-        myEmitter.emit( port , message["message"] );
+        this.emit("message", message, port )
+
+        if( retry > 0 )
+        {
+            setTimeout( () =>
+            {
+                this.recursiveSend(message, port, --retry);
+            }, global.config.retry.timer);
+        }
     }
+    
+    sendB(text, port)
+    {
+        const message = JSON.parse( text )
+
+        if( db[ message["timestamp"] ] )
+        {
+            if(  --db[message["timestamp"]] == 0 ) delete db[ message["timestamp"] ]
+        }
+        else
+        {
+            db[ message["timestamp"] ] = (global.config.retry.times)
+            this.emit( port , message["message"] );
+        }
+    }
+
 }
 
-const readB = (events, port) =>
-{
-    events.on( port, text => sendB(port, text) );
-}
-
-module.exports = { /*listen, send, events : myEmitter, defaultPort, clientServer*/sendA, sendB, events : myEmitter , readB }
+module.exports = myBuffer

@@ -2,8 +2,8 @@
     "encryption" : false,
     "retry" : 
     {
-        "times" : 3,
-        "timeout" : 3000
+        "times" : 2,
+        "timer" : 4000
     },
     "udp":
     {
@@ -13,17 +13,20 @@
     {
         "port" : 8080,
         "destination" : "192.168.1.4:80",
-        "proxy" : false
+        "proxy" : false,
+        "timeout" : 60000
     },
     "https":
     {
         "port" : 8443,
         "destination" : "192.168.1.81:8443",
-        "proxy" : false
+        "proxy" : false,
+        "timeout" : 60000
     },
     "mqtt":
     {
-        "brokerListen" : "mqtt://127.0.0.1",
-        "brokerSend" : "mqtt://127.0.0.1"
+        "broker" : "mqtt://127.0.0.1",
+        "qos" : 2,
+        "topic" : "#"
     }
 }
