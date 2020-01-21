@@ -28,7 +28,7 @@ class Protocol extends events
         client.on('message', (topic, message, packet) =>
         {
             const text = JSON.stringify( { topic:topic, message:message.toString("utf8")} )
-            console.error( "listener: " + text)
+            console.error( "MQTT listener: " + text)
             this.emit( "message", text, defaultPort )
         });
     }

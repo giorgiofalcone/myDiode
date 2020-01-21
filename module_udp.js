@@ -53,7 +53,7 @@ class Protocol extends events
             {
                 if (err) console.error(err);
                 console.log( "UDP packet sent to " + global.config.transmitNic.IPbcast + ":" + port)
-                udp.close();
+                //udp.close();
             });
         });
     }
