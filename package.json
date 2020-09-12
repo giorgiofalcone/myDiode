@@ -15,7 +15,7 @@
     "dotenv": "^8.1.0",
     "https": "^1.0.0",
     "mqtt": "^3.0.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "pipe-wrap": "^1.0.0"
   }
 }
